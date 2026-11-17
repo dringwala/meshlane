@@ -1,0 +1,48 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfplan
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+# keep the lock file: provider pins are committed
+!.terraform.lock.hcl
+
+# Python (CLI, generators)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# dbt
+target/
+dbt_packages/
+logs/
+*.duckdb
+*.duckdb.wal
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# adopter-specific account mapping for the example (a template is committed instead)
+examples/logistics-3pl/accounts.local.*
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

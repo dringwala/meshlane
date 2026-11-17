@@ -1,0 +1,5 @@
+# docs/how-to
+
+Diátaxis section. See [architecture proposal](../architecture.md#documentation).
+
+> Status: not started.

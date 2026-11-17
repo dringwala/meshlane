@@ -18,6 +18,20 @@ meshlane is an open-source reference implementation and template set for standin
 
 AWS (S3, Glue, Lake Formation, Athena, Kinesis, API Gateway, MWAA) · Apache Iceberg · dbt · Terraform · GitHub Actions · DataHub · OpenLineage · OPA
 
+## Repository layout
+
+| Path | Contents | Phase |
+| --- | --- | --- |
+| [`platform/`](platform/) | Terraform modules: foundation, ports, ingestion, orchestration, catalog | 0–3 |
+| [`schemas/`](schemas/) | JSON Schemas for the `x-platform` ODPS/ODCS extensions | 0 |
+| [`policies/`](policies/) | OPA/Rego governance policies and tests | 1 |
+| [`vocabulary/`](vocabulary/) | Logistics glossary and shared identifiers | 1–2 |
+| [`.github/workflows/`](.github/workflows/) | Reusable CI workflows for product repos | 1 |
+| [`cli/`](cli/) | The `meshlane` CLI | 1–4 |
+| [`examples/logistics-3pl/`](examples/logistics-3pl/) | Fictional 3PL with synthetic data | 1–3 |
+| [`templates/`](templates/) | Copier templates for products | 4 |
+| [`docs/`](docs/) | Architecture, ADRs, open questions, spikes, Diátaxis docs | all |
+
 ## Documentation
 
 | Document | Contents |
