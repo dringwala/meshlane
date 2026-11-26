@@ -1,6 +1,6 @@
 # meshlane architecture proposal
 
-Status: accepted for Phase 0 · Last updated: 2026-11-17
+Status: accepted for Phase 0 · Last updated: 2026-11-25
 
 ## Overview
 
@@ -48,10 +48,12 @@ All decisions are recorded as ADRs in [`adr/`](adr/).
 | [011](adr/011-apache-2-license.md) | Apache-2.0 license |
 | [012](adr/012-bitol-odps-odcs.md) | Descriptor = Bitol ODPS v1.1.0; contracts = Bitol ODCS v3.2.0; schemas vendored and pinned; platform bindings as extensions |
 | [013](adr/013-glue-lake-formation-technical-layer.md) | Glue Data Catalog + Lake Formation are always the technical catalog and enforcement layer |
+| [014](adr/014-separate-dev-prod-accounts.md) | Separate dev and prod accounts, including governance and shared platform |
+| [015](adr/015-single-region.md) | Single AWS region in v1 |
 
 ## Architecture
 
-The mesh runs across three kinds of AWS account: one governance account, one shared platform account, and one account per domain. Data never moves between accounts to be shared; Lake Formation grants access in place.
+The mesh runs across three kinds of AWS account: one governance account, one shared platform account, and one account per domain. Dev and prod each have their own complete set of these accounts and share nothing ([ADR 014](adr/014-separate-dev-prod-accounts.md)), and the whole mesh runs in one AWS region ([ADR 015](adr/015-single-region.md)). The diagram shows one environment. Data never moves between accounts to be shared; Lake Formation grants access in place.
 
 ```mermaid
 flowchart TB
@@ -80,7 +82,9 @@ flowchart TB
 | Shared platform | CI deploy roles (GitHub OIDC), MWAA environment, schema registry, observability, Terraform state | Platform team |
 | Domain (one each) | Raw and product S3 buckets, Glue databases, Iceberg tables, streams, APIs, product compute | Domain team |
 
-One MWAA environment in the platform account runs all DAGs at first. DAGs assume a per-product role in the domain account, so a domain never holds MWAA. A per-domain MWAA option is an open question.
+The table describes one environment; dev and prod each have all three kinds. The four-domain example therefore needs twelve accounts.
+
+One MWAA environment in each platform account runs all of that environment's DAGs at first. DAGs assume a per-product role in the domain account, so a domain never holds MWAA. A per-domain MWAA option is an open question.
 
 ### Platform layers
 
@@ -457,7 +461,7 @@ Templates are extracted in Phase 4 from three working phases, not designed up fr
 
 | Phase | Delivers | Exit gate |
 | --- | --- | --- |
-| 0 · Foundations | ADRs 001–013, extension JSON Schemas, naming and tagging conventions, account baseline modules; spikes on DataHub footprint, ODPS/ODCS validation, environment layout, single region | WMS example files validate; foundation applies cleanly to three sandbox accounts |
+| 0 · Foundations | ADRs 001–015, extension JSON Schemas, naming and tagging conventions, account baseline modules; spikes on DataHub footprint and ODPS/ODCS validation | WMS example files validate; foundation applies cleanly to three sandbox accounts |
 | 1 · First thin slice | WMS Shipments batch product end to end (SFTP drop, staging, dbt-athena, Iceberg port); MWAA DAG generated from the descriptor; reusable CI with policies and contract tests | A consumer account queries the product through Lake Formation; CI blocks a breaking change |
 | 2 · Mesh behavior | Transportation domain, Order Management ERP pull, Customer Analytics consumer-aligned product; DataHub adapter, subscription workflow, lineage, scorecard v1 | The OTIF product runs on schedule across three domains; example cost measured |
 | 3 · Stream and API ports | Kinesis stream and API port modules, schema registry, AsyncAPI and OpenAPI generation; restricted-field handling outside Lake Formation | Load Tracking serves batch, stream and API ports from one contract |
