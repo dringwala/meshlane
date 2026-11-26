@@ -6,7 +6,7 @@ Time-boxed Phase 0 investigations. Each spike produces one write-up named after 
 | --- | --- | --- | --- |
 | [ODPS/ODCS validation](oq-03-odps-odcs-validation/README.md) (done) | [3](../open-questions.md), [4](../open-questions.md) | Do the example descriptor and contract validate against the official JSON Schemas? Where do `x-platform` extensions live? Does datacontract-cli read ODPS or only ODCS? | Corrected example YAML, `schemas/` skeleton |
 | DataHub footprint | [2](../open-questions.md) | What does DataHub on Fargate with managed MSK, OpenSearch and RDS cost and take to run? Is `create` mode realistic for small adopters? | Cost and ops estimate, go/no-go on `create` mode |
-| Environment layout | [6](../open-questions.md) | Separate dev and prod accounts per domain, or one account with prefixed resources? | Default proposal and Terraform layout |
-| Region scope | [8](../open-questions.md) | Is single region enough for v1? | One-paragraph decision |
+| Environment layout (not needed: decided in [ADR 014](../adr/014-separate-dev-prod-accounts.md)) | [6](../open-questions.md) | Separate dev and prod accounts per domain, or one account with prefixed resources? | Terraform layout is now part of the foundation modules |
+| Region scope (not needed: decided in [ADR 015](../adr/015-single-region.md)) | [8](../open-questions.md) | Is single region enough for v1? | ADR 015 |
 
 Phase 0 exit gate: WMS example files validate; foundation applies cleanly to three sandbox accounts.

@@ -37,7 +37,7 @@ AWS (S3, Glue, Lake Formation, Athena, Kinesis, API Gateway, MWAA) · Apache Ice
 | Document | Contents |
 | --- | --- |
 | [Architecture proposal](docs/architecture.md) | Scope, accounts, ports, descriptors, ingestion, governance, developer experience, roadmap |
-| [Architecture decision records](docs/adr/) | ADR 001–013 |
+| [Architecture decision records](docs/adr/) | ADR 001–015 |
 | [Open questions](docs/open-questions.md) | Unresolved items and the phase each must close by |
 
 ## License
