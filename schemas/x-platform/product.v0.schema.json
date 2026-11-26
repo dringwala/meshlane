@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://raw.githubusercontent.com/dringwala/meshlane/main/schemas/x-platform/product.v0.schema.json",
+  "title": "meshlane x-platform extension for an ODPS data product",
+  "description": "Schema for the `value` of the `x-platform` entry in an ODPS descriptor's customProperties. Version 0: unstable until Phase 1 exit. Cross-references (for example, that ingestion keys match input port names) are checked by OPA policies, not by this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tier", "sourceSystem", "schedule", "costCenter", "ports"],
+  "properties": {
+    "tier": {
+      "description": "Golden-path tier (see architecture: Developer experience).",
+      "enum": [1, 2, 3]
+    },
+    "sourceSystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["erp", "wms", "tms", "internal"] },
+        "vendor": { "type": "string", "minLength": 1 }
+      }
+    },
+    "schedule": {
+      "description": "Cron expression for the generated MWAA DAG.",
+      "type": "string",
+      "minLength": 1
+    },
+    "costCenter": { "type": "string", "minLength": 1 },
+    "ingestion": {
+      "description": "Keyed by input port name.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/ingestion" }
+    },
+    "ports": {
+      "description": "Keyed by output port name.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/port" }
+    }
+  },
+  "$defs": {
+    "ingestion": {
+      "type": "object",
+      "required": ["module"],
+      "properties": {
+        "module": { "enum": ["file-drop", "api-pull"] }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "module": { "const": "file-drop" },
+            "pattern": { "type": "string", "minLength": 1 },
+            "via": { "enum": ["sftp", "s3"] }
+          },
+          "required": ["pattern", "via"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "module": { "const": "api-pull" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "port": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {
+          "properties": {
+            "type": { "const": "iceberg-table" },
+            "partitionBy": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "kinesis-stream" },
+            "shards": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "api" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    }
+  }
+}

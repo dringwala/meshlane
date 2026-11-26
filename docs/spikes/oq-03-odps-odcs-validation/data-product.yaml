@@ -1,0 +1,37 @@
+# data-product.yaml (ODPS v1.1.0)
+apiVersion: v1.1.0
+kind: DataProduct
+id: warehouse-ops.wms-shipments
+name: WMS Shipments
+version: 1.2.0
+status: active
+domain: warehouse-ops
+type: sourceAligned
+team:
+  name: Warehouse Ops data team
+  members:
+    - username: wh-data-owner@example.com
+      role: owner
+inputPorts:
+  - name: wms-daily-extract
+    version: 1.0.0
+    contractId: warehouse-ops.wms-raw-shipments
+outputPorts:
+  - name: shipments
+    version: 1.2.0
+    contractId: warehouse-ops.shipments
+  - name: shipment-events
+    version: 1.0.0
+    contractId: warehouse-ops.shipment-events
+customProperties:
+  - property: x-platform
+    value:
+      tier: 1
+      sourceSystem: { type: wms, vendor: generic }
+      schedule: "0 * * * *"
+      costCenter: WH-OPS
+      ingestion:
+        wms-daily-extract: { module: file-drop, pattern: "shipments_*.csv", via: sftp }
+      ports:
+        shipments: { type: iceberg-table, partitionBy: [ship_date] }
+        shipment-events: { type: kinesis-stream, shards: 1 }

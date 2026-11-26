@@ -1,0 +1,45 @@
+# contracts/shipments.odcs.yaml (ODCS v3.2.0)
+apiVersion: v3.2.0
+kind: DataContract
+id: warehouse-ops.shipments
+version: 1.2.0
+status: active
+domain: warehouse-ops
+dataProduct: wms-shipments
+schema:
+  - name: shipments
+    physicalType: table
+    quality:
+      - metric: rowCount
+        mustBeGreaterThan: 0
+    properties:
+      - name: shipment_id
+        logicalType: string
+        primaryKey: true
+        required: true
+        classification: internal
+        quality:
+          - metric: duplicateValues
+            mustBe: 0
+      - name: sscc
+        logicalType: string
+        description: GS1 Serial Shipping Container Code
+        classification: internal
+        customProperties:
+          - { property: x-vocabulary, value: gs1.sscc }
+      - name: ship_from_gln
+        logicalType: string
+        classification: internal
+        customProperties:
+          - { property: x-vocabulary, value: gs1.gln }
+      - name: consignee_name
+        logicalType: string
+        classification: restricted
+      - name: ship_date
+        logicalType: date
+        required: true
+        classification: internal
+slaProperties:
+  - property: freshness
+    value: 2
+    unit: h
