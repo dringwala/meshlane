@@ -1,6 +1,6 @@
 # meshlane architecture proposal
 
-Status: accepted for Phase 0 · Last updated: 2026-11-16
+Status: accepted for Phase 0 · Last updated: 2026-11-17
 
 ## Overview
 
@@ -46,7 +46,7 @@ All decisions are recorded as ADRs in [`adr/`](adr/).
 | [009](adr/009-datahub-first-catalog.md) | DataHub first business catalog adapter; SageMaker Catalog second |
 | [010](adr/010-cli-first-developer-experience.md) | CLI-first developer experience; Backstage scaffolder later |
 | [011](adr/011-apache-2-license.md) | Apache-2.0 license |
-| [012](adr/012-bitol-odps-odcs.md) | Descriptor = Bitol ODPS v1.0; contracts = Bitol ODCS v3; platform bindings as extensions |
+| [012](adr/012-bitol-odps-odcs.md) | Descriptor = Bitol ODPS v1.1.0; contracts = Bitol ODCS v3.2.0; schemas vendored and pinned; platform bindings as extensions |
 | [013](adr/013-glue-lake-formation-technical-layer.md) | Glue Data Catalog + Lake Formation are always the technical catalog and enforcement layer |
 
 ## Architecture
@@ -202,23 +202,27 @@ Each product declares itself in one ODPS file and one ODCS contract per output p
 | `x-platform.ingestion` | Input port | `file-drop` or `api-pull` module and its settings |
 | `x-platform.port.type` | Output port | `iceberg-table`, `kinesis-stream` or `api` module |
 | `x-platform.schedule` | Product | MWAA DAG schedule |
-| `x-platform.classification` | Contract property | LF-tag value and column masking |
 | `x-platform.costCenter` | Product | Cost-allocation tags |
+
+Column classification needs no extension: the native ODCS `classification` property carries the tier (`public`, `internal`, `confidential` or `restricted`) and drives the LF-tag value and column masking. The extension schema lives in [`schemas/x-platform/`](../schemas/x-platform/); it checks the shape of the block, while cross-references (for example, that ingestion keys match input port names) are checked by OPA policies.
 
 ### Example: WMS shipments product
 
 ```yaml
-# data-product.yaml (ODPS v1.0)
-apiVersion: v1.0.0
+# data-product.yaml (ODPS v1.1.0)
+apiVersion: v1.1.0
 kind: DataProduct
 id: warehouse-ops.wms-shipments
 name: WMS Shipments
 version: 1.2.0
 status: active
 domain: warehouse-ops
+type: sourceAligned
 team:
-  - username: wh-data-owner@example.com
-    role: owner
+  name: Warehouse Ops data team
+  members:
+    - username: wh-data-owner@example.com
+      role: owner
 inputPorts:
   - name: wms-daily-extract
     version: 1.0.0
@@ -245,8 +249,8 @@ customProperties:
 ```
 
 ```yaml
-# contracts/shipments.odcs.yaml (ODCS v3)
-apiVersion: v3.0.2
+# contracts/shipments.odcs.yaml (ODCS v3.2.0)
+apiVersion: v3.2.0
 kind: DataContract
 id: warehouse-ops.shipments
 version: 1.2.0
@@ -256,18 +260,27 @@ dataProduct: wms-shipments
 schema:
   - name: shipments
     physicalType: table
+    quality:
+      - metric: rowCount
+        mustBeGreaterThan: 0
     properties:
       - name: shipment_id
         logicalType: string
         primaryKey: true
         required: true
+        classification: internal
+        quality:
+          - metric: duplicateValues
+            mustBe: 0
       - name: sscc
         logicalType: string
         description: GS1 Serial Shipping Container Code
+        classification: internal
         customProperties:
           - { property: x-vocabulary, value: gs1.sscc }
       - name: ship_from_gln
         logicalType: string
+        classification: internal
         customProperties:
           - { property: x-vocabulary, value: gs1.gln }
       - name: consignee_name
@@ -276,26 +289,21 @@ schema:
       - name: ship_date
         logicalType: date
         required: true
-    quality:
-      - rule: rowCount
-        mustBeGreaterThan: 0
-      - rule: duplicateCount
-        column: shipment_id
-        mustBe: 0
+        classification: internal
 slaProperties:
   - property: freshness
     value: 2
     unit: h
 ```
 
-Field names follow the published ODPS and ODCS examples; Phase 0 validates both files against the official JSON Schemas before anything is built on them.
+Both files validate against the vendored ODPS v1.1.0 and ODCS v3.2.0 schemas and the `x-platform` extension schema; see the [validation spike](spikes/oq-03-odps-odcs-validation/README.md) and its `validate.py`. The upstream schemas are pinned in [`schemas/upstream/`](../schemas/upstream/) because upstream edits released versions in place.
 
 ### Contract versioning rules
 
 - Adding an optional column is a minor version.
 - Removing or renaming a column, changing a type, or tightening a rule is a major version.
 - A major version publishes a new output port version beside the old one; the old one stays for a deprecation window set in the descriptor.
-- CI runs `datacontract changelog` against the last released contract and fails a breaking change without a major bump.
+- CI runs `datacontract breaking` against the last released contract. It exits 1 on a breaking change (removed column, changed type), but it does not read version numbers, so a small wrapper fails the build unless the major version increased. (`datacontract changelog` only lists differences and always exits 0.)
 
 ## Ingestion patterns
 
