@@ -15,14 +15,14 @@ team:
 inputPorts:
   - name: wms-daily-extract
     version: 1.0.0
-    contractId: warehouse-ops.wms-raw-shipments
+    contractId: warehouse-ops.wms-shipments.wms-daily-extract
 outputPorts:
   - name: shipments
     version: 1.2.0
-    contractId: warehouse-ops.shipments
+    contractId: warehouse-ops.wms-shipments.shipments
   - name: shipment-events
     version: 1.0.0
-    contractId: warehouse-ops.shipment-events
+    contractId: warehouse-ops.wms-shipments.shipment-events
 customProperties:
   - property: x-platform
     value:

@@ -17,5 +17,6 @@
 | [013](013-glue-lake-formation-technical-layer.md) | Glue Data Catalog and Lake Formation as the technical layer | Accepted |
 | [014](014-separate-dev-prod-accounts.md) | Separate dev and prod accounts | Accepted |
 | [015](015-single-region.md) | Single AWS region in v1 | Accepted |
+| [016](016-naming-and-tagging.md) | Naming and tagging conventions | Accepted |
 
 New ADRs use the next number and the same Context / Decision / Consequences sections.

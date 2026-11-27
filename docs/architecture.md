@@ -50,6 +50,7 @@ All decisions are recorded as ADRs in [`adr/`](adr/).
 | [013](adr/013-glue-lake-formation-technical-layer.md) | Glue Data Catalog + Lake Formation are always the technical catalog and enforcement layer |
 | [014](adr/014-separate-dev-prod-accounts.md) | Separate dev and prod accounts, including governance and shared platform |
 | [015](adr/015-single-region.md) | Single AWS region in v1 |
+| [016](adr/016-naming-and-tagging.md) | Naming and tagging conventions: short slugs, buckets per product, versioned table names, four required tags |
 
 ## Architecture
 
@@ -85,6 +86,8 @@ flowchart TB
 The table describes one environment; dev and prod each have all three kinds. The four-domain example therefore needs twelve accounts.
 
 One MWAA environment in each platform account runs all of that environment's DAGs at first. DAGs assume a per-product role in the domain account, so a domain never holds MWAA. A per-domain MWAA option is an open question.
+
+Resource names and cost tags are derived from the descriptor by the rules in [naming and tagging](reference/naming-and-tagging.md).
 
 ### Platform layers
 
@@ -230,14 +233,14 @@ team:
 inputPorts:
   - name: wms-daily-extract
     version: 1.0.0
-    contractId: warehouse-ops.wms-raw-shipments
+    contractId: warehouse-ops.wms-shipments.wms-daily-extract
 outputPorts:
   - name: shipments
     version: 1.2.0
-    contractId: warehouse-ops.shipments
+    contractId: warehouse-ops.wms-shipments.shipments
   - name: shipment-events
     version: 1.0.0
-    contractId: warehouse-ops.shipment-events
+    contractId: warehouse-ops.wms-shipments.shipment-events
 customProperties:
   - property: x-platform
     value:
@@ -256,13 +259,14 @@ customProperties:
 # contracts/shipments.odcs.yaml (ODCS v3.2.0)
 apiVersion: v3.2.0
 kind: DataContract
-id: warehouse-ops.shipments
+id: warehouse-ops.wms-shipments.shipments
 version: 1.2.0
 status: active
 domain: warehouse-ops
 dataProduct: wms-shipments
 schema:
   - name: shipments
+    physicalName: shipments_v1
     physicalType: table
     quality:
       - metric: rowCount
@@ -306,6 +310,7 @@ Both files validate against the vendored ODPS v1.1.0 and ODCS v3.2.0 schemas and
 
 - Adding an optional column is a minor version.
 - Removing or renaming a column, changing a type, or tightening a rule is a major version.
+- Published names carry the major version from v1 (`shipments_v1`), recorded in the contract's `physicalName`.
 - A major version publishes a new output port version beside the old one; the old one stays for a deprecation window set in the descriptor.
 - CI runs `datacontract breaking` against the last released contract. It exits 1 on a breaking change (removed column, changed type), but it does not read version numbers, so a small wrapper fails the build unless the major version increased. (`datacontract changelog` only lists differences and always exits 0.)
 
@@ -370,7 +375,7 @@ A table's tier is the highest tier of any of its columns. Restricted columns are
 | `module-pinned` | `infra/` uses an unpinned or unapproved module source |
 | `no-raw-port` | A raw or staged layer is exposed as an output port |
 | `freshness-sla` | A batch port has no freshness SLA |
-| `tags-present` | A Terraform resource lacks domain, product or cost-center tags |
+| `tags-present` | A Terraform resource lacks domain, product, cost-center or environment tags |
 
 Each policy carries a plain-language message and a docs link that CI posts as a pull-request comment.
 
@@ -461,7 +466,7 @@ Templates are extracted in Phase 4 from three working phases, not designed up fr
 
 | Phase | Delivers | Exit gate |
 | --- | --- | --- |
-| 0 · Foundations | ADRs 001–015, extension JSON Schemas, naming and tagging conventions, account baseline modules; spikes on DataHub footprint and ODPS/ODCS validation | WMS example files validate; foundation applies cleanly to three sandbox accounts |
+| 0 · Foundations | ADRs 001–016, extension JSON Schemas, naming and tagging conventions, account baseline modules; spikes on DataHub footprint and ODPS/ODCS validation | WMS example files validate; foundation applies cleanly to three sandbox accounts |
 | 1 · First thin slice | WMS Shipments batch product end to end (SFTP drop, staging, dbt-athena, Iceberg port); MWAA DAG generated from the descriptor; reusable CI with policies and contract tests | A consumer account queries the product through Lake Formation; CI blocks a breaking change |
 | 2 · Mesh behavior | Transportation domain, Order Management ERP pull, Customer Analytics consumer-aligned product; DataHub adapter, subscription workflow, lineage, scorecard v1 | The OTIF product runs on schedule across three domains; example cost measured |
 | 3 · Stream and API ports | Kinesis stream and API port modules, schema registry, AsyncAPI and OpenAPI generation; restricted-field handling outside Lake Formation | Load Tracking serves batch, stream and API ports from one contract |

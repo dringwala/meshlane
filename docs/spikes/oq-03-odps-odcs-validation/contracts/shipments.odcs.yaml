@@ -1,13 +1,14 @@
 # contracts/shipments.odcs.yaml (ODCS v3.2.0)
 apiVersion: v3.2.0
 kind: DataContract
-id: warehouse-ops.shipments
+id: warehouse-ops.wms-shipments.shipments
 version: 1.2.0
 status: active
 domain: warehouse-ops
 dataProduct: wms-shipments
 schema:
   - name: shipments
+    physicalName: shipments_v1
     physicalType: table
     quality:
       - metric: rowCount
