@@ -7,8 +7,7 @@ Settles [open questions 3 and 4](../../open-questions.md). Run 2026-11-17 agains
 The example in the architecture proposal did **not** validate. Corrected files now do, and a validator proves it (including negative cases, so the checks can fail). The files and validator were later updated for the naming rules in [ADR 016](../../adr/016-naming-and-tagging.md).
 
 ```bash
-python -m venv .venv && .venv/bin/pip install -r docs/spikes/oq-03-odps-odcs-validation/requirements.txt
-.venv/bin/python docs/spikes/oq-03-odps-odcs-validation/validate.py
+uv run --locked python docs/spikes/oq-03-odps-odcs-validation/validate.py
 ```
 
 | Files | Contents |
@@ -34,7 +33,7 @@ Valid ODCS library metrics are `nullValues`, `missingValues`, `invalidValues`, `
 | Capability | Finding |
 | --- | --- |
 | Read ODPS descriptors | **No.** `datacontract lint data-product.yaml` fails with `Cannot parse ODPS product`, and `catalog` skips ODPS files by name. meshlane validates the descriptor itself (JSON Schema plus OPA) |
-| Lint ODCS contracts | Yes, v3.1.0 and v3.2.0 both pass |
+| Lint ODCS contracts | Yes, v3.1.0 and v3.2.0 both pass. **But lint is lenient** (found 2026-11-27 while building repo CI): a wrong `kind` is treated as a legacy format and only warns, and the deprecated `rule:` syntax passes against v3.2.0; both exit 0. Schema validation against the vendored ODCS schema is the gate |
 | Detect breaking changes | Use **`datacontract breaking`**, not `changelog`. `changelog` lists differences and always exits 0. `breaking` exits 1 on a removed column or a type change and 0 on an added optional column, and has `--perspective consumer\|producer` |
 | Check the version bump | **No.** `breaking` does not compare version numbers. The `semver-breaking` policy needs a small wrapper: if `breaking` exits 1, the major version must have increased |
 

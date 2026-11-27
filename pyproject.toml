@@ -1,0 +1,16 @@
+# Tooling for this repository's checks. This is not a published package; the
+# meshlane CLI will have its own project under cli/.
+[project]
+name = "meshlane-repo-checks"
+version = "0.0.0"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    # Pinned exactly: findings about its behaviour are tied to this version.
+    "datacontract-cli==1.2.11",
+    "jsonschema>=4.26",
+    "pyyaml>=6.0",
+]
+
+[tool.uv]
+package = false
