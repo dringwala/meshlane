@@ -1,0 +1,66 @@
+# CI for this repository. Not one of the reusable workflows product repos call.
+name: repo-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repo-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check links and architecture examples
+        run: python3 .github/scripts/check_docs.py
+
+  schemas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      EXAMPLES: docs/spikes/oq-03-odps-odcs-validation
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.8"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      # Python version comes from .python-version. --locked fails the build if
+      # uv.lock is out of date with pyproject.toml.
+      - name: Install dependencies
+        run: |
+          uv sync --locked
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: Check vendored schema checksums
+        working-directory: schemas/upstream
+        run: sha256sum --check --strict SHA256SUMS
+      - name: Check extension schemas are valid JSON Schema
+        run: |
+          python - <<'EOF'
+          import json, pathlib
+          from jsonschema.validators import validator_for
+          for path in sorted(pathlib.Path("schemas/x-platform").glob("*.json")):
+              schema = json.loads(path.read_text())
+              validator_for(schema).check_schema(schema)
+              print("ok", path)
+          EOF
+      - name: Validate example descriptor and contract
+        run: python "$EXAMPLES/validate.py"
+      - name: Lint example contracts
+        run: |
+          for contract in "$EXAMPLES"/contracts/*.odcs.yaml; do
+            datacontract lint "$contract"
+          done

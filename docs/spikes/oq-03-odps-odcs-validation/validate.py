@@ -3,7 +3,7 @@ x-platform extension schema (spike for open question 3) and the naming rules
 of ADR 016.
 
 Run from the repository root:
-    python docs/spikes/oq-03-odps-odcs-validation/validate.py
+    uv run --locked python docs/spikes/oq-03-odps-odcs-validation/validate.py
 Exits non-zero if any positive check fails or any negative check passes.
 """
 import copy
@@ -140,7 +140,10 @@ def negative(name, errs):
 
 
 positive("data-product.yaml (ODPS v1.1.0 + x-platform)", check_product(product))
-positive("contracts/shipments.odcs.yaml (ODCS v3.2.0 + classification)", check_contract(contract))
+# Every contract file is checked, not only the one the negative cases mutate.
+# This is the strict gate: `datacontract lint` accepts some invalid contracts.
+for path in sorted((HERE / "contracts").glob("*.yaml")):
+    positive(f"contracts/{path.name} (ODCS v3.2.0 + classification)", check_contract(yaml.safe_load(path.read_text())))
 
 # Negative cases: the checks must be able to fail.
 p = copy.deepcopy(product); p["team"] = [{"username": "a@example.com", "role": "owner"}]
@@ -190,5 +193,8 @@ negative("second table not named after its object", check_contract(c))
 
 c = copy.deepcopy(contract); c["schema"].append(copy.deepcopy(c["schema"][0]))
 negative("two schema objects with the same name", check_contract(c))
+
+c = copy.deepcopy(contract); c["kind"] = "Nonsense"
+negative("wrong `kind` (datacontract lint lets this through)", check_contract(c))
 
 sys.exit(1 if failed else 0)
