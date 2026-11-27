@@ -25,20 +25,28 @@
       "type": "string",
       "minLength": 1
     },
-    "costCenter": { "type": "string", "minLength": 1 },
+    "costCenter": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$" },
     "ingestion": {
       "description": "Keyed by input port name.",
       "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
       "additionalProperties": { "$ref": "#/$defs/ingestion" }
     },
     "ports": {
       "description": "Keyed by output port name.",
       "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
       "minProperties": 1,
       "additionalProperties": { "$ref": "#/$defs/port" }
     }
   },
   "$defs": {
+    "slug": {
+      "description": "Domain, product or port slug (docs/reference/naming-and-tagging.md).",
+      "type": "string",
+      "maxLength": 20,
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
     "ingestion": {
       "type": "object",
       "required": ["module"],

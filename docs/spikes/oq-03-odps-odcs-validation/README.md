@@ -4,7 +4,7 @@ Settles [open questions 3 and 4](../../open-questions.md). Run 2026-11-17 agains
 
 ## Result
 
-The example in the architecture proposal did **not** validate. Corrected files now do, and a validator proves it (including seven negative cases, so the checks can fail).
+The example in the architecture proposal did **not** validate. Corrected files now do, and a validator proves it (including negative cases, so the checks can fail). The files and validator were later updated for the naming rules in [ADR 016](../../adr/016-naming-and-tagging.md).
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r docs/spikes/oq-03-odps-odcs-validation/requirements.txt
